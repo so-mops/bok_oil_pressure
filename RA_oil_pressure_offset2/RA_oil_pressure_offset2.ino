@@ -44,13 +44,18 @@
 //Buffer limits
 #define RAWIN_SIZE 150
 #define RESP_SIZE 50
-
+#define QTYPE_SIZE 10
+#define CMD_SIZE 20
+#define N_ARGS 4
+#define ARG_SIZE 40
+#define SYSID_SIZE 20
+#define OBSID_SIZE 10
 
 struct serial_data
 {
-  char queryType[10];
-  char cmd[20];
-  char args[4][50];
+  char queryType[QTYPE_SIZE];
+  char cmd[CMD_SIZE];
+  char args[N_ARGS][ARG_SIZE];
   unsigned short arg_count;
 };
 
@@ -64,12 +69,12 @@ const char * ercode[] = {
 
 struct ng_data
 {
-   char sysid[20];
-   char obsid[10];
+   char sysid[SYSID_SIZE];
+   char obsid[OBSID_SIZE];
    unsigned short refNum;
-   char queryType[8];
+   char queryType[QTYPE_SIZE];
    unsigned short arg_count;  
-   char args[7][40];
+   char args[N_ARGS][ARG_SIZE];
 };
 struct ng_data data;
 struct ng_data currCom;
@@ -385,9 +390,9 @@ int parseNG( char inRaw[] , struct ng_data *parsed ) {
    char *tok;
    int errorState = 0;
    int refNum;
-   char queryType[10];
-   char obsid[10];
-   char sysid[10];
+   char queryType[QTYPE_SIZE];
+   char obsid[OBSID_SIZE];
+   char sysid[SYSID_SIZE];
    tok = strtok(inRaw, " \t");
    
           while( tok != NULL )
@@ -397,7 +402,7 @@ int parseNG( char inRaw[] , struct ng_data *parsed ) {
                          case 0://observation ID
                                  strcpy( obsid, tok );
                                  if( strcmp( obsid, OBSID ) == 0)
-                                         strcpy( parsed->obsid, tok );
+                                         strncpy( parsed->obsid, tok, OBSID_SIZE );
                                  else
                                                  errorState = 1;
                                  break;
@@ -406,7 +411,7 @@ int parseNG( char inRaw[] , struct ng_data *parsed ) {
                                  strcpy( sysid, tok );
                                  
                                  if( strcmp( sysid, SYSID ) == 0 )
-                                         strcpy( parsed->sysid, tok );
+                                         strncpy( parsed->sysid, tok, SYSID_SIZE );
                                  
                                  else
                                          errorState = 2;
@@ -421,23 +426,26 @@ int parseNG( char inRaw[] , struct ng_data *parsed ) {
                                          break;
          
                          case 3://query type
-                                 strcpy( queryType, tok );
+                                 strncpy( queryType, tok, QTYPE_SIZE );
                                  
                                  if ( ( strcmp(queryType, "COMMAND") == 0) || ( strcmp(queryType, "REQUEST") == 0) )
-                                         strcpy( parsed->queryType, queryType );
+                                         strncpy( parsed->queryType, queryType, QTYPE_SIZE );
                                  else
                                          errorState = 4;
                                  break;
 
                          default://Arguments
-                                 strcpy( parsed->args[word_count - 4], tok  );
+                                 if(strlen(tok) < ARG_SIZE)
+                                   strncpy( parsed->args[word_count - 4], tok, strlen(tok) );
+                                 else
+                                   strncpy( parsed->args[word_count - 4], tok, ARG_SIZE );
          
                  }
                   tok = strtok( NULL, " \t" );
                    word_count++;
           }
-   parsed->arg_count = word_count - 1;
-   return errorState;
+    parsed->arg_count = word_count - 1;
+    return errorState;
  }
  
 
