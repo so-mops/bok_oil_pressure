@@ -434,11 +434,8 @@ int parseNG( char inRaw[] , struct ng_data *parsed ) {
                                          errorState = 4;
                                  break;
 
-                         default://Arguments
-                                 if(strlen(tok) < ARG_SIZE)
-                                   strncpy( parsed->args[word_count - 4], tok, strlen(tok) );
-                                 else
-                                   strncpy( parsed->args[word_count - 4], tok, ARG_SIZE );
+                         default://Arguments 
+                               strncpy( parsed->args[word_count - 4], tok, ARG_SIZE );
          
                  }
                   tok = strtok( NULL, " \t" );
